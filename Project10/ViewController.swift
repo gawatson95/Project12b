@@ -46,6 +46,9 @@ class ViewController: UICollectionViewController, UIImagePickerControllerDelegat
         let picker = UIImagePickerController()
         picker.allowsEditing = true
         picker.delegate = self
+        if UIImagePickerController.isSourceTypeAvailable(.camera) {
+            picker.sourceType = .camera
+        }
         present(picker, animated: true)
     }
     
@@ -74,16 +77,28 @@ class ViewController: UICollectionViewController, UIImagePickerControllerDelegat
     override func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
         let person = people[indexPath.item]
         
-        let ac = UIAlertController(title: "Rename Person", message: nil, preferredStyle: .alert)
-        ac.addTextField()
-        ac.addAction(UIAlertAction(title: "OK", style: .default) { [weak self, weak ac] _ in
-            guard let newName = ac?.textFields?[0].text else { return }
-            person.name = newName
-            self?.collectionView.reloadData()
+        let editPersonAC = UIAlertController(title: "Edit Person", message: "Would you like to rename or delete the selected person?", preferredStyle: .alert)
+        editPersonAC.addAction(UIAlertAction(title: "Rename", style: .default) { _ in
+            let ac = UIAlertController(title: "Rename Person", message: nil, preferredStyle: .alert)
+            ac.addTextField()
+            ac.addAction(UIAlertAction(title: "OK", style: .default) { [weak self, weak ac] _ in
+                guard let newName = ac?.textFields?[0].text else { return }
+                person.name = newName
+                self?.collectionView.reloadData()
+            })
+            
+            ac.addAction(UIAlertAction(title: "Cancel", style: .cancel))
+            self.present(ac, animated: true)
         })
         
-        ac.addAction(UIAlertAction(title: "Cancel", style: .cancel))
-        present(ac, animated: true)
+        editPersonAC.addAction(UIAlertAction(title: "Delete", style: .destructive) { _ in
+            if let index = self.people.firstIndex(of: person) {
+                self.people.remove(at: index)
+            }
+            self.collectionView.reloadData()
+        })
+        
+        present(editPersonAC, animated: true)
     }
 
 }
