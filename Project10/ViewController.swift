@@ -100,6 +100,5 @@ class ViewController: UICollectionViewController, UIImagePickerControllerDelegat
         
         present(editPersonAC, animated: true)
     }
-
 }
 
