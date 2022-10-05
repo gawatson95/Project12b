@@ -15,6 +15,16 @@ class ViewController: UICollectionViewController, UIImagePickerControllerDelegat
         super.viewDidLoad()
         
         navigationItem.leftBarButtonItem = UIBarButtonItem(barButtonSystemItem: .add, target: self, action: #selector(addNewPerson))
+        
+        let defaults = UserDefaults.standard
+        if let savedPeople = defaults.object(forKey: "people") as? Data {
+            let decoder = JSONDecoder()
+            do {
+                people = try decoder.decode([Person].self, from: savedPeople)
+            } catch {
+                print("Failed to load people")
+            }
+        }
     }
 
     
@@ -46,9 +56,9 @@ class ViewController: UICollectionViewController, UIImagePickerControllerDelegat
         let picker = UIImagePickerController()
         picker.allowsEditing = true
         picker.delegate = self
-        if UIImagePickerController.isSourceTypeAvailable(.camera) {
-            picker.sourceType = .camera
-        }
+//        if UIImagePickerController.isSourceTypeAvailable(.camera) {
+//            picker.sourceType = .camera
+//        }
         present(picker, animated: true)
     }
     
@@ -64,6 +74,7 @@ class ViewController: UICollectionViewController, UIImagePickerControllerDelegat
         
         let person = Person(name: "Unknown", image: imageName)
         people.append(person)
+        save()
         collectionView.reloadData()
         
         dismiss(animated: true)
@@ -84,6 +95,7 @@ class ViewController: UICollectionViewController, UIImagePickerControllerDelegat
             ac.addAction(UIAlertAction(title: "OK", style: .default) { [weak self, weak ac] _ in
                 guard let newName = ac?.textFields?[0].text else { return }
                 person.name = newName
+                self?.save()
                 self?.collectionView.reloadData()
             })
             
@@ -91,14 +103,25 @@ class ViewController: UICollectionViewController, UIImagePickerControllerDelegat
             self.present(ac, animated: true)
         })
         
-        editPersonAC.addAction(UIAlertAction(title: "Delete", style: .destructive) { _ in
-            if let index = self.people.firstIndex(of: person) {
-                self.people.remove(at: index)
+        editPersonAC.addAction(UIAlertAction(title: "Delete", style: .destructive) { [weak self] _ in
+            if let index = self?.people.firstIndex(of: person) {
+                self?.people.remove(at: index)
             }
-            self.collectionView.reloadData()
+            self?.save()
+            self?.collectionView.reloadData()
         })
         
         present(editPersonAC, animated: true)
+    }
+    
+    func save() {
+        let encoder = JSONEncoder()
+        if let saveData = try? encoder.encode(people) {
+            let defaults = UserDefaults.standard
+            defaults.set(saveData, forKey: "people")
+        } else {
+            print("Failed to save people")
+        }
     }
 }
 
